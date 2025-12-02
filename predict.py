@@ -11,15 +11,16 @@ MODEL_PATH = "model/modelo.h5"
 model = load_model(MODEL_PATH)
 
 # Mapa de índices
-INDEX_TO_LETTER = {i: chr(65 + i) for i in range(26)}
+LETRAS = ['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y'] 
+INDEX_TO_LETTER = {i: letra for i, letra in enumerate(LETRAS)}
 
 
-def cargar_y_predecir(nombre_foto: str) -> Foto:
+def predecir(nombre_foto: str) -> Foto:
     """
     Recibe la ruta de una imagen,
     crea el objeto Foto,
     hace el predict
-    y devuelve Foto completo.
+    y devuelve el objeto.
     """
 
     ruta_imagen = os.path.join(DATA_DIR, nombre_foto)

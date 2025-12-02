@@ -19,7 +19,6 @@ env/
 *.png
 
 # Ignorar archivos de test
-predict.py
 
 # Ignorar pesos del modelo
 *.h5
