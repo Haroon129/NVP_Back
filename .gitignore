@@ -1,0 +1,35 @@
+# Ignorar archivos de Python compilados y caches
+**pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignorar entornos virtuales
+venv/
+env/
+.env/
+
+# Ignorar archivos de log
+*.log
+
+# Ignorar archivos de Jupyter Notebook
+*.ipynb
+
+# Ignorar Imagens
+*.png
+
+# Ignorar archivos de test
+predict.py
+
+# Ignorar pesos del modelo
+*.h5
+*.keras
+
+# Ignorar carpetas de datos y modelos
+data/
+models/
+
+# Ignorar otros archivos temporales
+*.tmp
+*.swp
+.DS_Store

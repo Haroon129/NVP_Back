@@ -1,0 +1,2 @@
+from fotografia import Foto
+
