@@ -36,7 +36,7 @@ def to_jsonable(obj):
         return {str(k): to_jsonable(v) for k, v in obj.items()}
 
     try:
-        import numpy as np  # type: ignore
+        import numpy as np
         if isinstance(obj, (np.integer,)):
             return int(obj)
         if isinstance(obj, (np.floating,)):
@@ -73,7 +73,6 @@ def to_jsonable(obj):
 
     if hasattr(obj, "__dict__"):
         try:
-            # ojo: __dict__ puede contener cosas no serializables; por eso recursivo
             return to_jsonable(vars(obj))
         except Exception:
             pass
