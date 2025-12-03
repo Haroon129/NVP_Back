@@ -4,8 +4,10 @@ from tensorflow.keras.models import load_model
 from PIL import Image
 from fotografia import Foto
 
-DATA_DIR = "data/predict"
-MODEL_PATH = "model/modelo.h5"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATA_DIR = os.path.join(BASE_DIR, "data", "predict")
+MODEL_PATH = os.path.join(BASE_DIR, "models", "model_final.h5")
 
 # Cargar modelo al iniciar el backend
 model = load_model(MODEL_PATH)
@@ -15,10 +17,11 @@ LETRAS = ['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S
 INDEX_TO_LETTER = {i: letra for i, letra in enumerate(LETRAS)}
 
 
-def predecir(nombre_foto: str) -> Foto:
+def predict(nombre_foto: str) -> Foto:
     """
     Recibe la ruta de una imagen,
     crea el objeto Foto,
+    ajusta tamaño si es necesario,
     hace el predict
     y devuelve el objeto.
     """
@@ -29,17 +32,24 @@ def predecir(nombre_foto: str) -> Foto:
         raise FileNotFoundError(f"No existe la imagen: {ruta_imagen}")
 
     foto = Foto()
-    #foto.set_url(ruta_imagen) Crear URL
 
-    # Cargar imagen (ya en 28x28 gris según dijiste)
+    # Cargar imagen a escala de grises
     img = Image.open(ruta_imagen).convert("L")
+
+    # Si no es 28x28 → redimensionar
+    if img.size != (28, 28):
+        img = img.resize((28, 28))
+
+    # Convertir a array
     img_arr = np.array(img)
+
+    # Guardar el tamaño usado realmente
     foto.set_size(img_arr.shape)
 
     # Normalizar
     img_arr = img_arr / 255.0
 
-    # Preparar batch
+    # Preparar batch para el modelo CNN
     img_arr = img_arr.reshape(1, 28, 28, 1)
 
     # Predicción
