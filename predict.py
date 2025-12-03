@@ -17,7 +17,7 @@ LETRAS = ['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q','R','S
 INDEX_TO_LETTER = {i: letra for i, letra in enumerate(LETRAS)}
 
 
-def predict(nombre_foto: str) -> Foto:
+def prediction(nombre_foto: str) -> Foto:
     """
     Recibe la ruta de una imagen,
     crea el objeto Foto,
