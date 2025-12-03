@@ -5,10 +5,10 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import os
 
 # ===========================
-#   RUTAS DEL PROYECTO
+#   RUTAS DEL DATASET
 # ===========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_DIR = os.path.join(BASE_DIR, "..", "src", "Manos")
+DATASET_DIR = os.path.join(BASE_DIR, "src", "data","dataset")
 
 TRAIN_DIR = os.path.join(DATASET_DIR, "Train")
 TEST_DIR = os.path.join(DATASET_DIR, "Test")
@@ -134,6 +134,6 @@ else:
 # ===========================
 #   GUARDAR MODELO
 # ===========================
-MODEL_PATH = os.path.join(BASE_DIR, "model_final.h5")
+MODEL_PATH = os.path.join(BASE_DIR, "src","models","model_prueba.h5")
 model.save(MODEL_PATH)
 print(f"\nModelo entrenado y guardado en: {MODEL_PATH}")
