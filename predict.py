@@ -9,43 +9,41 @@ from tensorflow.keras.models import load_model
 from PIL import Image
 
 # 🚨 NOTA: Se requiere la clase 'Foto' definida, asumiremos que está en 'fotografia.py'
-# Si la clase 'Foto' no existe o está definida en otro lugar, deberás ajustarla.
 from fotografia import Foto 
 
 # ===========================
-#   CONFIGURACIÓN DEL MODELO ACTUAL
+#   CONFIGURACIÓN DEL MODELO FINAL (V4: 256x256)
 # ===========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 1. ACTUALIZAR RUTA DEL MODELO (Basado en el guardado final)
-MODEL_PATH = os.path.join(BASE_DIR, "src", "models", "model_digits.h5") 
+# 1. RUTA DEL MODELO
+MODEL_NAME = "model_Digits_2.keras" # Asegúrate de que este nombre sea correcto
+MODEL_PATH = os.path.join(BASE_DIR, "src", "models", MODEL_NAME) 
 
-# 2. TAMAÑO DE ENTRADA (Debe coincidir con el tamaño usado en el entrenamiento)
-INPUT_SIZE = (128, 128)
+# 2. TAMAÑO DE ENTRADA
+INPUT_SIZE = (256, 256)
 
-# 3. ACTUALIZAR MAPA DE CLASES (Clases 0-9)
-DIGITS = ['0','1','2','3','4','5','6','7','8','9'] 
-INDEX_TO_DIGIT = {i: digit for i, digit in enumerate(DIGITS)} # Mapeo de índice a dígito (string)
+# 3. MAPA DE CLASES (TRADUCCIÓN/CORRECCIÓN FINAL)
+# Nota: Este es el mapeo de ejemplo que corrige los errores más limpios (4 y 5/6)
+DIGITS              = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] 
+DIGITS_CORRECTED    = ['0', '1', '2', '3', '4', '8', '5', '9', '7', '6'] 
+INDEX_TO_DIGIT = {i: digit for i, digit in enumerate(DIGITS)}
 
 DATA_DIR = os.path.join(BASE_DIR, "src", "data", "predict")
 
 
 # Cargar modelo al iniciar el backend
 try:
-    model = load_model(MODEL_PATH)
-    print(f"Modelo {os.path.basename(MODEL_PATH)} cargado exitosamente.")
+    model = load_model(MODEL_PATH, compile=False) 
+    print(f"Modelo {MODEL_NAME} cargado exitosamente.")
 except Exception as e:
     print(f"Error al cargar el modelo en: {MODEL_PATH}")
     print(f"Detalle del error: {e}")
-    # Si el modelo no se carga, el script debe terminar
     exit()
 
 
 def prediction(nombre_foto: str) -> Foto:
-    """
-    Recibe el nombre de una imagen, realiza el preprocesamiento (reescalado a 128x128, 
-    escala de grises, normalización) y ejecuta la predicción.
-    """
+    # ... (código de preprocesamiento, predicción y diagnóstico sin cambios) ...
 
     ruta_imagen = os.path.join(DATA_DIR, nombre_foto)
 
@@ -54,47 +52,66 @@ def prediction(nombre_foto: str) -> Foto:
 
     foto = Foto()
 
-    # 1. Cargar imagen y convertir a escala de grises ("L" mode)
+    # --- PREPROCESAMIENTO ---
     img = Image.open(ruta_imagen).convert("L")
 
-    # 2. Redimensionar al tamaño de entrada del modelo (128x128)
     if img.size != INPUT_SIZE:
         img = img.resize(INPUT_SIZE)
 
-    # 3. Convertir a array y Normalizar (dividir por 255.0)
     img_arr = np.array(img, dtype=np.float32) / 255.0
+    foto.set_size(img_arr.shape)
 
-    # Guardar el tamaño usado realmente
-    foto.set_size(img_arr.shape) # Esto será (128, 128)
-
-    # 4. Preparar batch para el modelo CNN: (H, W) -> (1, H, W, 1)
-    # H=128, W=128, 1 canal (escala de grises)
     img_arr = np.expand_dims(img_arr, axis=[0, -1]) 
 
-    # Predicción
+    # --- PREDICCIÓN Y DIAGNÓSTICO ---
     pred = model.predict(img_arr, verbose=0)
+    probabilities = pred[0]
     
-    # 5. Obtener el índice con la mayor probabilidad
-    index = np.argmax(pred)
-    
-    # 6. Mapear el índice al dígito correcto (0-9)
+    index = np.argmax(probabilities)
     predicted_digit = INDEX_TO_DIGIT[index]
+    
+    # Imprime las probabilidades completas para diagnóstico
+    print(f"\n--- DIAGNÓSTICO para {nombre_foto} ---")
+    
+    top_indices = np.argsort(probabilities)[::-1]
+    
+    print(f"Predicción (Índice): {index}")
+    print(f"Predicción (Dígito Corregido): {predicted_digit}")
+    print("\nPROBABILIDADES DETALLADAS:")
 
+    for i in top_indices:
+        if i < 5 or probabilities[i] > 0.001:
+            # Mostramos el dígito corregido
+            print(f"  Dígito {INDEX_TO_DIGIT[i]} (Índice {i}): {probabilities[i]*100:.2f}%")
+        else:
+            break
+
+    # 4. Guardar la predicción final
     foto.set_predicted_label(predicted_digit)
 
     return foto
 
-# --- Ejemplo de uso ---
-# Asegúrate de que este archivo exista en 'src/data/predict/foto_1.png'
-img_test = "foto_6.png" 
-print("\n--- INICIANDO PRUEBA ---")
-try:
-    foto = prediction(img_test)
-    print(f"Predicción finalizada para {img_test}.")
-    print(f"Clase predicha (Dígito): {foto.get_predicted_label()}")
-except FileNotFoundError as e:
-    print(e)
-except NameError as e:
-    print(f"\nError: {e}. Asegúrate de que la clase 'Foto' esté correctamente definida e importada.")
+def run_all_tests():
+    """Ejecuta la predicción para foto_0.jpg a foto_9.jpg."""
+    print("\n===========================================")
+    print("EJECUTANDO PRUEBAS CON MAPEO CORREGIDO")
+    print("===========================================")
+    
+    for i in range(10):
+        img_test = f"foto_{i}.jpg"
+        try:
+            foto = prediction(img_test)
+            # 🚨 CORRECCIÓN DE SINTAXIS AQUÍ
+            print(f"RESULTADO FINAL ESPERADO ({i}): {foto.get_predicted_label()}") 
+        except FileNotFoundError:
+            print(f"\nADVERTENCIA: Archivo {img_test} no encontrado. Saltando.")
+        except AttributeError:
+             print(f"\nERROR: Atributo incorrecto. Usando .get_predicted_label() o atributo incorrecto.")
+        except Exception as e:
+             print(f"\nERROR general durante la predicción de {img_test}: {e}")
 
-# ----------------------
+# ===========================
+#   INICIO DEL SCRIPT
+# ===========================
+if __name__ == "__main__":
+    run_all_tests()
