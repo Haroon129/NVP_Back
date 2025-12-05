@@ -26,7 +26,7 @@ env/
 
 # Ignorar carpetas de datos y modelos
 data/
-models/
+
 
 # Ignorar otros archivos temporales
 *.tmp
