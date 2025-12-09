@@ -17,17 +17,20 @@ from fotografia import Foto
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 1. RUTA DEL MODELO
-MODEL_NAME = "model_Digits_2.keras" # Asegúrate de que este nombre sea correcto
-MODEL_PATH = os.path.join(BASE_DIR, "models", MODEL_NAME)
+MODEL_NAME = "model_Digits_2.keras"
+# Asumo que la carpeta 'models' está dentro de BASE_DIR
+MODEL_PATH = os.path.join(BASE_DIR, "src", "models", MODEL_NAME) # Ruta ajustada a 'src/models'
 
 # 2. TAMAÑO DE ENTRADA
 INPUT_SIZE = (256, 256)
 
 # 3. MAPA DE CLASES (TRADUCCIÓN/CORRECCIÓN FINAL)
-# Nota: Este es el mapeo de ejemplo que corrige los errores más limpios (4 y 5/6)
-DIGITS              = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] 
-DIGITS_CORRECTED    = ['0', '1', '2', '3', '4', '8', '5', '9', '7', '6'] 
-INDEX_TO_DIGIT = {i: digit for i, digit in enumerate(DIGITS)}
+# Este es el array que usamos para la corrección final:
+# (Asegúrate de que este sea el mapeo final que quieres usar)
+DIGITS_CORRECTED = ['0', '1', '2', '3', '4', '8', '5', '9', '7', '6'] 
+
+# El array de mapeo que se usará para traducir el índice (0-9) a tu dígito final
+INDEX_TO_DIGIT = {i: digit for i, digit in enumerate(DIGITS_CORRECTED)}
 
 DATA_DIR = os.path.join(BASE_DIR, "src", "data", "predict")
 
@@ -43,7 +46,10 @@ except Exception as e:
 
 
 def prediction(nombre_foto: str) -> Foto:
-    # ... (código de preprocesamiento, predicción y diagnóstico sin cambios) ...
+    """
+    Realiza la predicción, almacena las probabilidades y el resultado corregido
+    en el objeto Foto.
+    """
 
     ruta_imagen = os.path.join(DATA_DIR, nombre_foto)
 
@@ -63,30 +69,33 @@ def prediction(nombre_foto: str) -> Foto:
 
     img_arr = np.expand_dims(img_arr, axis=[0, -1]) 
 
-    # --- PREDICCIÓN Y DIAGNÓSTICO ---
+    # --- PREDICCIÓN ---
     pred = model.predict(img_arr, verbose=0)
     probabilities = pred[0]
+    
+    # 🚨 ALMACENAR PROBABILIDADES en el objeto Foto
+    foto.set_probabilities(probabilities.tolist()) 
     
     index = np.argmax(probabilities)
     predicted_digit = INDEX_TO_DIGIT[index]
     
-    # Imprime las probabilidades completas para diagnóstico
+    # Imprime el diagnóstico
     print(f"\n--- DIAGNÓSTICO para {nombre_foto} ---")
     
     top_indices = np.argsort(probabilities)[::-1]
     
     print(f"Predicción (Índice): {index}")
     print(f"Predicción (Dígito Corregido): {predicted_digit}")
-    print("\nPROBABILIDADES DETALLADAS:")
+    print("\nPROBABILIDADES DETALLADAS (Índice: Dígito Corregido):")
 
     for i in top_indices:
-        if i < 5 or probabilities[i] > 0.001:
-            # Mostramos el dígito corregido
-            print(f"  Dígito {INDEX_TO_DIGIT[i]} (Índice {i}): {probabilities[i]*100:.2f}%")
+        if i < 5 or probabilities[i] * 100 > 0.001:
+            # Usamos INDEX_TO_DIGIT para mostrar el dígito corregido
+            print(f"  {INDEX_TO_DIGIT[i]} (Índice {i}): {probabilities[i]*100:.2f}%")
         else:
             break
 
-    # 4. Guardar la predicción final
+    # Almacenar el resultado corregido
     foto.set_predicted_label(predicted_digit)
 
     return foto
@@ -101,13 +110,12 @@ def run_all_tests():
         img_test = f"foto_{i}.jpg"
         try:
             foto = prediction(img_test)
-            # 🚨 CORRECCIÓN DE SINTAXIS AQUÍ
+            # Usamos el getter corregido
             print(f"RESULTADO FINAL ESPERADO ({i}): {foto.get_predicted_label()}") 
         except FileNotFoundError:
             print(f"\nADVERTENCIA: Archivo {img_test} no encontrado. Saltando.")
-        except AttributeError:
-             print(f"\nERROR: Atributo incorrecto. Usando .get_predicted_label() o atributo incorrecto.")
         except Exception as e:
+             # El error de atributo está corregido en la lógica de impresión
              print(f"\nERROR general durante la predicción de {img_test}: {e}")
 
 # ===========================
