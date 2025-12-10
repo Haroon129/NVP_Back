@@ -3,7 +3,7 @@
 *.pyc
 *.pyo
 *.pyd
-
+.env
 # Ignorar entornos virtuales
 venv/
 env/
@@ -27,6 +27,7 @@ env/
 # Ignorar carpetas de datos y modelos
 data/
 models/
+credentials/
 
 # Ignorar otros archivos temporales
 *.tmp
