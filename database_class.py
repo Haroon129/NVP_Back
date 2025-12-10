@@ -77,3 +77,59 @@ class DatabaseConnection:
         finally:
             if self.cursor:
                 self.cursor.close()
+    
+    def update_label_pred_incorrecta(self, target_url: str, new_label_value: int) -> bool:
+        """
+        Actualiza el campo 'label' de una imagen usando la URL como WHERE
+        y luego verifica la actualización con un SELECT.
+
+        Args:
+            target_url: La URL de la imagen a actualizar.
+            new_label_value: El nuevo valor numérico para la columna 'label'.
+
+        Returns:
+            True si la actualización fue exitosa, False si falló.
+        """
+        
+        update_sql = """
+        UPDATE imagenes
+        SET label = %s
+        WHERE URL = %s;
+        """
+        update_params = (new_label_value, target_url)
+        
+        # Usamos el método existente execute_query()
+        update_success = self.execute_query(update_sql, update_params)
+
+        if not update_success:
+            print("❌ Operación abortada: El UPDATE falló.")
+            return False
+        return True
+    
+    def update_label_pred_correcta(self, target_url: str) -> bool:
+        """
+        Actualiza el campo 'label' de una imagen usando la URL como WHERE
+        y luego verifica la actualización con un SELECT.
+
+        Args:
+            target_url: La URL de la imagen a actualizar.
+            new_label_value: El nuevo valor numérico para la columna 'label'.
+
+        Returns:
+            True si la actualización fue exitosa, False si falló.
+        """
+        
+        SQL_SYNC = """
+        UPDATE imagenes
+        SET label = predicted_label
+        Where URL = %s;
+        """
+        update_params = (target_url)
+        
+        # Usamos el método existente execute_query()
+        update_success = self.execute_query(SQL_SYNC, update_params)
+
+        if not update_success:
+            print("❌ Operación abortada: El UPDATE falló.")
+            return False
+        return True

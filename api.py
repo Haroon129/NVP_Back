@@ -171,7 +171,7 @@ def hand_sign_predict():
         
         for arg in (str(TEST_IMAGE_PATH), TEST_IMAGE_PATH.name, "test.jpg", nombre):
             try:
-                pred_result, top_indices = prediction(arg) 
+                pred_result = prediction(arg) 
                 last_err = None
                 break
             except Exception as e:
@@ -209,7 +209,7 @@ def hand_sign_predict():
             "db_inserted": db_success
         }
         
-        return jsonify({"prediccion": predicted_label, "meta": meta, "top_indices": top_indices})
+        return jsonify({"prediccion": predicted_label, "meta": meta, "probabilities": pred_result.get_probabilities()})
 
     except Exception as e:
         print(f"[{request_id}] ERROR en /predict: {e}")
@@ -222,12 +222,20 @@ def hand_sign_predict():
 def pred_correcta():
     url = request.form.get('url')
     db = DatabaseConnection()
-    return
+    if db.update_label_pred_correcta(url):
+        return True
+    return False
+    
+    
        
 @app.route('/predict/incorrecta',methods=["POST"])
 def pred_incorrecta():
-    return
-
+    url = request.form.get('url')
+    label = request.form.get('label')
+    db = DatabaseConnection()
+    if db.update_label_pred_incorrecta(url,label):
+        return True
+    return False
 
 
 if __name__ == "__main__":
