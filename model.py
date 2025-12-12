@@ -133,6 +133,6 @@ history = model.fit(
 # ===========================
 #   7. GUARDAR MODELO
 # ===========================
-MODEL_PATH = os.path.join(BASE_DIR, "src","models","model_Digits_2.keras") 
+MODEL_PATH = os.path.join(BASE_DIR, "models","model_Digits_2.keras") 
 model.save(MODEL_PATH)
 print(f"\nModelo entrenado (V4) y guardado en: {MODEL_PATH}")
