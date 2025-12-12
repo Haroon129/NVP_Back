@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 1. RUTA DEL MODELO
 MODEL_NAME = "model.keras"
-MODEL_PATH = os.path.join(BASE_DIR, "src","models",MODEL_NAME) 
+MODEL_PATH = os.path.join(BASE_DIR,"models",MODEL_NAME) 
 
 # 2. TAMAÑO DE ENTRADA
 INPUT_SIZE = (224, 224) 
