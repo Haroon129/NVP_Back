@@ -14,7 +14,7 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 from fotografia import Foto 
 
 # ===========================
-#    CONFIGURACIÓN INICIAL
+#    CONFIGURACIÓN INICIAL
 # ===========================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -42,15 +42,15 @@ try:
 except Exception as e:
     print(f"Error al cargar el modelo en: {MODEL_PATH}")
     print(f"Detalle del error: {e}")
-     # Salida limpia, aunque en un script real podrías usar exit()
+    # Salida limpia, aunque en un script real podrías usar exit()
     model = None 
 
 
 def prediction(nombre_foto: str) -> Foto:
     """
-    Realiza la predicción, almacena las probabilidades y el resultado corregido
-    en el objeto Foto.
-     """
+    Realiza la predicción, almacena las probabilidades como diccionario 
+    y el resultado corregido en el objeto Foto.
+    """
     if model is None:
         raise Exception("El modelo no está cargado.")
 
@@ -71,91 +71,27 @@ def prediction(nombre_foto: str) -> Foto:
     img_arr = np.array(img, dtype=np.float32)
     foto.set_size(img_arr.shape) 
 
-     # Aplicar la normalización correcta de EfficientNet y añadir el batch dimension
+    # Aplicar la normalización correcta de EfficientNet y añadir el batch dimension
     img_arr = preprocess_input(img_arr)
     img_arr = np.expand_dims(img_arr, axis=0)
 
-     # --- PREDICCIÓN ---
+    # --- PREDICCIÓN ---
     pred = model.predict(img_arr, verbose=0)
-    probabilities = pred[0]
+    probabilities_array = pred[0]
     
-     # 🚨 ALMACENAR PROBABILIDADES en el objeto Foto
-    foto.set_probabilities(probabilities.tolist()) 
+    # Creamos un diccionario donde la clave es la clase (Ej: 'A', 'B') 
+    # y el valor es la probabilidad (float).
+    probabilities_dict = {
+        INDEX_TO_CLASS[i]: float(probabilities_array[i])
+        for i in range(NUM_CLASSES)
+    }
+
+    # ALMACENAR PROBABILIDADES en el objeto Foto
+    foto.set_probabilities(probabilities_dict) 
     
-    index = np.argmax(probabilities)
+    index = np.argmax(probabilities_array)
     predicted_class = INDEX_TO_CLASS[index]
-    
-     # Imprime el diagnóstico
-    print(f"\n--- DIAGNÓSTICO para {nombre_foto} ---")
-    
-    top_indices = np.argsort(probabilities)[::-1]
-    
-    print(f"Predicción (Índice): {index}")
-    print(f"Predicción (Clase ASL): {predicted_class}")
-    print("\nPROBABILIDADES DETALLADAS (Clase ASL):")
 
-     # Imprimir las 5 mejores predicciones
-    for rank, i in enumerate(top_indices[:5]):
-         # Usamos INDEX_TO_CLASS para mostrar la clase ASL
-        print(f" {rank+1}. {INDEX_TO_CLASS[i]} (Confianza): {probabilities[i]*100:.2f}%")
-
-     # Almacenar el resultado corregido
     foto.set_predicted_label(predicted_class)
 
     return foto
-
-def run_all_tests():
-    """Ejecuta la predicción para las 29 imágenes del Test Set."""
-    if model is None:
-        return
-
-    print("\n===========================================")
-    print(f"EJECUTANDO PRUEBAS EN EL TEST SET (N={NUM_CLASSES} Clases)")
-    print("===========================================")
-    
-     # Nombres base de las 29 clases
-    base_labels = list(string.ascii_uppercase) + ['delete', 'nothing', 'space']
-    
-     # Archivos de prueba esperados (Ej: A_test.jpg, delete_test.jpg)
-    test_files = [f"{label}_test.jpg" for label in base_labels]
-    
-    correct_count = 0
-    total_tests = 0
-
-    for img_test in test_files:
-        try:
-            foto = prediction(img_test)
-    
-            # Extraer la etiqueta verdadera (Ej: 'A' de 'A_test.jpg')
-            true_label = img_test.split('_')[0]
-            predicted_label = foto.get_predicted_label().split(' ')[0]
-
-            is_correct = "✅ CORRECTO" if true_label == predicted_label else "❌ FALLO"
-    
-            if true_label == predicted_label:
-              correct_count += 1
-    
-            total_tests += 1
-
-            print(f"--- RESULTADO {is_correct} ({img_test}) ---")
-            print(f"Etiqueta Real: {true_label}")
-            print(f"Predicción: {foto.get_predicted_label()}")
-    
-        except FileNotFoundError:
-            # Esto es esperado si el Test Set no está completo
-            continue # Ignoramos la advertencia para no saturar la salida
-        except Exception as e:
-            print(f"\nERROR general durante la predicción de {img_test}: {e}")
-    
-    if total_tests > 0:
-         accuracy = (correct_count / total_tests) * 100
-         print("\n===========================================")
-         print(f"📊 Resumen de Precisión ({total_tests} Pruebas): {accuracy:.2f}%")
-         print("===========================================")
-
-
-"""
-img = "foto_U.png"
-foto = prediction(img)
-
-print(f"Predicción: {foto.get_predicted_label()}")"""
