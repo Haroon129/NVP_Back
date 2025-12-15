@@ -138,59 +138,33 @@ class DatabaseConnection:
         finally:
             if self.cursor:
                 self.cursor.close()
-    
-    def update_label_pred_incorrecta(self, target_url: str, new_label_value: int) -> bool:
-        """
-        Updates the 'label' field of an image using the URL as the WHERE condition 
-        and then verifies the update with a SELECT query.
 
-        Args:
-            target_url: The URL of the image to be updated.
-            new_label_value: The new numerical value for the 'label' column.
+def update_label_pred_incorrecta(self, target_url: str, new_label_value: int) -> bool:
+    update_sql = """
+    UPDATE imagenes
+    SET label = %s
+    WHERE URL = %s;
+    """
+    update_params = (int(new_label_value), target_url)
 
-        Returns:
-            True if the update was successful, False if it failed.
-        """
-        
-        update_sql = """
-        UPDATE imagenes
-        SET label = %s
-        WHERE URL = %s;
-        """
-        update_params = (new_label_value, target_url)
-        
-        # Usamos el método existente execute_query()
-        update_success = self.execute_query(update_sql, update_params)
+    update_success = self.execute_query(update_sql, update_params)
+    if not update_success:
+        print("❌ Operación abortada: El UPDATE falló.")
+        return False
+    return True
 
-        if not update_success:
-            print("❌ Operación abortada: El UPDATE falló.")
-            return False
-        return True
-    
-    def update_label_pred_correcta(self, target_url: str) -> bool:
-        """
-        Updates the 'label' field of an image using the URL as the WHERE condition 
-        and subsequently verifies the update with a SELECT query.
 
-        Args:
-            target_url: The URL of the image to be updated.
-            new_label_value: The new numerical value for the 'label' column.
+def update_label_pred_correcta(self, target_url: str) -> bool:
+    SQL_SYNC = """
+    UPDATE imagenes
+    SET label = predicted_label
+    WHERE URL = %s;
+    """
+    update_params = (target_url,)  # 👈 coma para que sea tupla
 
-        Returns:
-            True if the update was successful, False if it failed.
-        """
-        
-        SQL_SYNC = """
-        UPDATE imagenes
-        SET label = predicted_label
-        Where URL = %s;
-        """
-        update_params = (target_url)
-        
-        # Usamos el método existente execute_query()
-        update_success = self.execute_query(SQL_SYNC, update_params)
+    update_success = self.execute_query(SQL_SYNC, update_params)
+    if not update_success:
+        print("❌ Operación abortada: El UPDATE falló.")
+        return False
+    return True
 
-        if not update_success:
-            print("❌ Operación abortada: El UPDATE falló.")
-            return False
-        return True
