@@ -22,11 +22,11 @@ env/
 
 # Ignorar pesos del modelo
 *.h5
-*.keras
+
 
 # Ignorar carpetas de datos y modelos
 data/
-models/
+
 credentials/
 
 # Ignorar otros archivos temporales
