@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from werkzeug.utils import secure_filename
+from flask_cors import CORS
 from pathlib import Path
 import uuid
 import base64
@@ -13,6 +14,15 @@ from cloudinari import subir_imagen_a_cloudinary
 from dotenv import load_dotenv
 
 app = Flask(__name__)
+
+CORS(
+    app,
+    resources={r"/*": {"origins": ["https://nvp.heradome.com"]}},
+    supports_credentials=False,
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
+)
+
 
 ROOT = Path(__file__).resolve().parent
 
@@ -91,6 +101,11 @@ def error_response(status_code: int, error: str, request_id: str, details=None, 
 # =========================================================
 # API ENDPOINTS
 # =========================================================
+
+@app.get("/")
+def root():
+    return jsonify(ok=True, service="nvp-back", endpoints=["/predict", "/predict/correcta", "/predict/incorrecta"]), 200
+
 
 @app.route("/predict", methods=["POST"])
 def hand_sign_predict():

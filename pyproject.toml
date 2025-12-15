@@ -12,4 +12,5 @@ dependencies = [
     "mysql-connector-python>=9.5.0",
     "opencv-python>=4.12.0.88",
     "tensorflow>=2.20.0",
+    "flask-cors>=4.0.0",
 ]
