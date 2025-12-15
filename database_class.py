@@ -1,16 +1,45 @@
 import mysql.connector
 
 class DatabaseConnection:
-    def __init__(self, host,user,database,password=''):
-        self.host=host
-        self.user=user
-        self.cnx=None
-        self.cursor=None
-        self.password=password
-        self.database=database
+    """
+    A class to manage connection and interaction with a MySQL database.
+    
+    It implements the Context Manager protocol (__enter__ and __exit__) 
+    to ensure the database connection is automatically opened and closed.
+    
+    Attributes:
+        host (str): Database server address.
+        user (str): Username for authentication.
+        database (str): Name of the database.
+        password (str): Password for authentication (default is '').
+        cnx (mysql.connector.connection): The active database connection object.
+        cursor (mysql.connector.cursor): The active cursor object.
+    """
+    def __init__(self, host, user, database, password=''):
+        """
+        Initializes the connection parameters.
+
+        Args:
+            host (str): The hostname or IP address of the MySQL server.
+            user (str): The user name for connecting to the database.
+            database (str): The name of the database to connect to.
+            password (str, optional): The password for the specified user. Defaults to ''.
+        """
+        self.host = host
+        self.user = user
+        self.cnx = None
+        self.cursor = None
+        self.password = password
+        self.database = database
         
     def get_cnx(self):
-        # (Tu código de conexión y manejo de errores va aquí, que ya está bien)
+        """
+        Establishes and returns a connection to the MySQL database.
+        
+        Returns:
+            mysql.connector.connection or None: The connection object if successful, 
+                                                or None if a connection error occurs.
+        """
         try:
             self.cnx = mysql.connector.connect(
                 host=self.host,
@@ -20,59 +49,91 @@ class DatabaseConnection:
             )
             return self.cnx
         except mysql.connector.Error as err:
-            # Simplificado para fines de este ejemplo:
-            print(f"❌ Error de conexión: {err}")
-            return None # Importante devolver algo si falla
+            print(f"❌ Connection Error: {err}")
+            return None
             
-    # El método de cierre es mucho más simple y seguro
     def close_cnx(self):
-        # Verifica que la conexión exista (no sea None) y que esté abierta antes de cerrarla.
+        """
+        Closes the active database connection if it exists and is open.
+        """
+        # Checks if the connection exists (is not None) and is open before closing.
         if self.cnx and self.cnx.is_connected():
             self.cnx.close()
-            # print("🔒 Conexión MySQL cerrada automáticamente.")
             
     def __enter__(self):
+        """
+        Context Manager entry method. Establishes the database connection.
+
+        Returns:
+            DatabaseConnection: The instance of the class itself.
+        """
         self.get_cnx()
         return self
     
-    # Aquí usamos la firma correcta y llamamos a close_cnx
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Context Manager exit method. Closes the database connection.
+        
+        Args:
+            exc_type: Exception type if an exception occurred within the 'with' block.
+            exc_val: Exception value if an exception occurred.
+            exc_tb: Traceback object if an exception occurred.
+        """
         self.close_cnx()
-        # NOTA: No necesitamos 'return self'. El Context Manager se encarga de salir.
-    
+        
     def execute_query(self, sql, params=None):
-        """Ejecuta consultas INSERT, UPDATE o DELETE, y realiza el COMMIT."""
+        """
+        Executes INSERT, UPDATE, or DELETE queries and performs a COMMIT.
+        
+        Args:
+            sql (str): The SQL query string to be executed.
+            params (tuple, optional): A tuple of parameters to substitute into the query. 
+                                      Defaults to None.
+
+        Returns:
+            bool: True if the query was executed and committed successfully, False otherwise.
+        """
         if not self.cnx or not self.cnx.is_connected():
-            print("❌ Error: No hay una conexión activa.")
+            print("❌ Error: No active connection.")
             return False
         try:
             self.cursor = self.cnx.cursor()
             self.cursor.execute(sql, params or ())
             self.cnx.commit()
-            print(f"✅ Consulta ejecutada y confirmada. Filas afectadas: {self.cursor.rowcount}")
+            print(f"✅ Query executed and committed. Rows affected: {self.cursor.rowcount}")
             return True
         except mysql.connector.Error as err:
-            print(f"❌ Error al ejecutar la consulta: {err}")
-            self.cnx.rollback() # Deshace los cambios si hay un error
+            print(f"❌ Error executing query: {err}")
+            self.cnx.rollback() # Rolls back changes if an error occurs
             return False
         finally:
             if self.cursor:
                 self.cursor.close()
 
-    def select_all(self, params=None):
-        """Ejecuta una consulta SELECT y devuelve todas las filas."""
-        sql = 'Select * from imagenes'
+    def select_all(self, sql, params=None):
+        """
+        Executes a SELECT query and returns all resulting rows as dictionaries.
+        
+        Args:
+            sql (str): The SQL query string (e.g., 'SELECT * FROM table_name WHERE condition').
+            params (tuple, optional): A tuple of parameters to substitute into the query. 
+                                      Defaults to None.
+
+        Returns:
+            list: A list of dictionaries representing the selected rows, or an empty list on error.
+        """
         if not self.cnx or not self.cnx.is_connected():
-            print("❌ Error: No hay una conexión activa.")
+            print("❌ Error: No active connection.")
             return []
             
         try:
-            self.cursor = self.cnx.cursor(dictionary=True) # dictionary=True para obtener resultados como dicts
+            # dictionary=True fetches results as dictionaries for easy column access
+            self.cursor = self.cnx.cursor(dictionary=True) 
             self.cursor.execute(sql, params or ())
             results = self.cursor.fetchall()
             return results
         except mysql.connector.Error as err:
-            print(f"❌ Error al ejecutar SELECT: {err}")
+            print(f"❌ Error executing SELECT: {err}")
             return []
         finally:
             if self.cursor:
@@ -80,15 +141,15 @@ class DatabaseConnection:
     
     def update_label_pred_incorrecta(self, target_url: str, new_label_value: int) -> bool:
         """
-        Actualiza el campo 'label' de una imagen usando la URL como WHERE
-        y luego verifica la actualización con un SELECT.
+        Updates the 'label' field of an image using the URL as the WHERE condition 
+        and then verifies the update with a SELECT query.
 
         Args:
-            target_url: La URL de la imagen a actualizar.
-            new_label_value: El nuevo valor numérico para la columna 'label'.
+            target_url: The URL of the image to be updated.
+            new_label_value: The new numerical value for the 'label' column.
 
         Returns:
-            True si la actualización fue exitosa, False si falló.
+            True if the update was successful, False if it failed.
         """
         
         update_sql = """
@@ -108,15 +169,15 @@ class DatabaseConnection:
     
     def update_label_pred_correcta(self, target_url: str) -> bool:
         """
-        Actualiza el campo 'label' de una imagen usando la URL como WHERE
-        y luego verifica la actualización con un SELECT.
+        Updates the 'label' field of an image using the URL as the WHERE condition 
+        and subsequently verifies the update with a SELECT query.
 
         Args:
-            target_url: La URL de la imagen a actualizar.
-            new_label_value: El nuevo valor numérico para la columna 'label'.
+            target_url: The URL of the image to be updated.
+            new_label_value: The new numerical value for the 'label' column.
 
         Returns:
-            True si la actualización fue exitosa, False si falló.
+            True if the update was successful, False if it failed.
         """
         
         SQL_SYNC = """
